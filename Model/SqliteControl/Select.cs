@@ -232,6 +232,25 @@ namespace TeamGipsy.Model.SqliteControl
             // }
             // return Output;
         }
+
+        public int ReviewedTodayCount()
+        {
+            SelectWordList();
+            int cnt = 0;
+            foreach (var w in AllWordList)
+            {
+                if (!string.IsNullOrEmpty(w.dateLastReviewed))
+                {
+                    DateTime dt;
+                    if (DateTime.TryParse(w.dateLastReviewed, out dt))
+                    {
+                        if (dt.Date == DateTime.Now.Date)
+                            cnt++;
+                    }
+                }
+            }
+            return cnt;
+        }
         #endregion
 
         #region 英语部分

@@ -17,6 +17,9 @@ using TeamGipsy.Model.StartWithWindows;
 using System.IO;
 using System.Windows.Xps.Packaging;
 using System.Windows.Input;
+using System.Timers;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace TeamGipsy
 {
@@ -59,6 +62,19 @@ namespace TeamGipsy
             // 所以播个没声音的音频先。
             PlayMute();
             //this.WindowState = (WindowState)FormWindowState.Minimized;
+
+            ToastNotificationManagerCompat.OnActivated += toastArgs =>
+            {
+                var args = ToastArguments.Parse(toastArgs.Argument);
+                string action = "";
+                try { action = args["action"]; } catch { }
+                if (action == "daily_begin")
+                {
+                    Begin_Click(null, null);
+                }
+            };
+
+            ScheduleDailyReminder();
         }
 
         private void OnHotKeyHandler(HotKey hotKey)
@@ -158,17 +174,32 @@ namespace TeamGipsy
 
             Vm.notifyIcon.ContextMenuStrip = Cms;
 
+            Cms.Renderer = new DarkToolStripRenderer(new TrayColorTable());
+            Cms.Font = new System.Drawing.Font("Microsoft YaHei UI", 10f, System.Drawing.FontStyle.Regular);
+            Cms.ShowCheckMargin = true;
+            Cms.ShowImageMargin = false;
+            Cms.ForeColor = System.Drawing.Color.Black;
+            Cms.Padding = new System.Windows.Forms.Padding(2);
+            Cms.Opening += (s, e) =>
+            {
+                ApplyRoundedRegion(Cms, 12);
+            };
+
 
             Begin.Text = "开始！";
             Begin.Click += new EventHandler(Begin_Click);
+            Begin.ForeColor = System.Drawing.Color.Black;
             Settings.Text = "参数设置";
+            Settings.ForeColor = System.Drawing.Color.Black;
 
 
             SetNumber.Text = "单词个数";
             SetNumber.Click += new EventHandler(SetNumber_Click);
+            SetNumber.ForeColor = System.Drawing.Color.Black;
 
             SetEngType.Text = "英标类型";
             SetEngType.Click += new EventHandler(SetEngType_Click);
+            SetEngType.ForeColor = System.Drawing.Color.Black;
 
             SetAutoPlay.Text = "自动播放";
             SetAutoPlay.Click += new EventHandler(AutoPlay_Click);
@@ -176,6 +207,7 @@ namespace TeamGipsy
                 SetAutoPlay.Checked = true;
             else
                 SetAutoPlay.Checked = false;
+            SetAutoPlay.ForeColor = System.Drawing.Color.Black;
 
             SetAutoLog.Text = "自动日志";
             SetAutoLog.Click += new EventHandler(AutoLog_Click);
@@ -183,17 +215,22 @@ namespace TeamGipsy
                 SetAutoLog.Checked = true;
             else
                 SetAutoLog.Checked = false;
+            SetAutoLog.ForeColor = System.Drawing.Color.Black;
 
 
             ImportWords.Text = "导入单词";
             ImportWords.Click += new EventHandler(ImportWords_Click);
+            ImportWords.ForeColor = System.Drawing.Color.Black;
 
             SelectBook.Text = "英语词汇";
+            SelectBook.ForeColor = System.Drawing.Color.Black;
 
             RandomTest.Text = "随机测试";
+            RandomTest.ForeColor = System.Drawing.Color.Black;
 
             GotoHtml.Text = "快捷说明";
             GotoHtml.Click += new EventHandler(ShortCuts_Click);
+            GotoHtml.ForeColor = System.Drawing.Color.Black;
 
             Start.Text = "开机启动";
             Start.Click += new EventHandler(Start_Click);
@@ -201,9 +238,11 @@ namespace TeamGipsy
                 Start.Checked = true;
             else
                 Start.Checked = false;
+            Start.ForeColor = System.Drawing.Color.Black;
 
             ExitMenuItem.Text = "退出";
             ExitMenuItem.Click += new EventHandler(ExitApp_Click);
+            ExitMenuItem.ForeColor = System.Drawing.Color.Black;
 
             ToolStripItem CET4_1 = new ToolStripMenuItem("四级核心词汇");
             CET4_1.Click += new EventHandler(SelectBook_Click);
@@ -246,31 +285,116 @@ namespace TeamGipsy
 
 
             Cms.Items.Add(Begin);
+            Cms.Items.Add(new ToolStripSeparator());
             //Cms.Items.Add(SetNumber);
             //Cms.Items.Add(SetEngType);
             Cms.Items.Add(ImportWords);
             Cms.Items.Add(SelectBook);
             Cms.Items.Add(RandomTest);
+            Cms.Items.Add(new ToolStripSeparator());
             Cms.Items.Add(Settings);
             Cms.Items.Add(GotoHtml);
+            Cms.Items.Add(new ToolStripSeparator());
             Cms.Items.Add(Start);
+            Cms.Items.Add(new ToolStripSeparator());
             Cms.Items.Add(ExitMenuItem);
 
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(CET4_1);
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(CET4_3);
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(CET6_1);
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(CET6_3);
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(IELTS_3);
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(TOEFL_2);
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(KaoYan_1);
-            ((ToolStripDropDownItem)Cms.Items[2]).DropDownItems.Add(KaoYan_2);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(RandomWord);
-            ((ToolStripDropDownItem)Cms.Items[4]).DropDownItems.Add(SetNumber);
-            ((ToolStripDropDownItem)Cms.Items[4]).DropDownItems.Add(SetEngType);
-            ((ToolStripDropDownItem)Cms.Items[4]).DropDownItems.Add(SetAutoPlay);
-            ((ToolStripDropDownItem)Cms.Items[4]).DropDownItems.Add(SetAutoLog);
-            ((ToolStripDropDownItem)Cms.Items[4]).DropDownItems.Add(ResetLearingStatus);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET4_1);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET4_3);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET6_1);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET6_3);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(IELTS_3);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(TOEFL_2);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(KaoYan_1);
+            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(KaoYan_2);
+            ((ToolStripDropDownItem)Cms.Items[4]).DropDownItems.Add(RandomWord);
+            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetNumber);
+            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetEngType);
+            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetAutoPlay);
+            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetAutoLog);
+            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(ResetLearingStatus);
 
+        }
+
+        class TrayColorTable : ProfessionalColorTable
+        {
+            public override System.Drawing.Color ToolStripDropDownBackground => System.Drawing.Color.White;
+            public override System.Drawing.Color MenuItemSelected => System.Drawing.Color.FromArgb(230, 240, 255);
+            public override System.Drawing.Color MenuItemBorder => System.Drawing.Color.FromArgb(200, 200, 200);
+            public override System.Drawing.Color ImageMarginGradientBegin => System.Drawing.Color.White;
+            public override System.Drawing.Color ImageMarginGradientMiddle => System.Drawing.Color.White;
+            public override System.Drawing.Color ImageMarginGradientEnd => System.Drawing.Color.White;
+            public override System.Drawing.Color MenuItemPressedGradientBegin => System.Drawing.Color.FromArgb(245, 245, 245);
+            public override System.Drawing.Color MenuItemPressedGradientEnd => System.Drawing.Color.FromArgb(245, 245, 245);
+            public override System.Drawing.Color MenuItemSelectedGradientBegin => System.Drawing.Color.FromArgb(230, 240, 255);
+            public override System.Drawing.Color MenuItemSelectedGradientEnd => System.Drawing.Color.FromArgb(230, 240, 255);
+            public override System.Drawing.Color SeparatorDark => System.Drawing.Color.FromArgb(220, 220, 220);
+            public override System.Drawing.Color SeparatorLight => System.Drawing.Color.FromArgb(220, 220, 220);
+        }
+
+        class DarkToolStripRenderer : ToolStripProfessionalRenderer
+        {
+            public DarkToolStripRenderer(ProfessionalColorTable colorTable) : base(colorTable) { }
+            protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+            {
+                e.TextColor = System.Drawing.Color.Black;
+                base.OnRenderItemText(e);
+            }
+            protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = CreateRoundRect(new RectangleF(0, 0, e.ToolStrip.Width - 1, e.ToolStrip.Height - 1), 12))
+                using (var brush = new SolidBrush(System.Drawing.Color.White))
+                {
+                    e.Graphics.FillPath(brush, path);
+                }
+            }
+            protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = CreateRoundRect(new RectangleF(0.5f, 0.5f, e.ToolStrip.Width - 1, e.ToolStrip.Height - 1), 12))
+                using (var pen = new Pen(System.Drawing.Color.FromArgb(200, 200, 200)))
+                {
+                    e.Graphics.DrawPath(pen, path);
+                }
+            }
+            protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+            {
+                var item = e.Item;
+                var rect = new RectangleF(2, 1, item.Bounds.Width - 4, item.Bounds.Height - 2);
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                if (item.Selected || item.Pressed)
+                {
+                    using (var path = CreateRoundRect(rect, 10))
+                    using (var brush = new SolidBrush(System.Drawing.Color.FromArgb(230, 240, 255)))
+                    {
+                        e.Graphics.FillPath(brush, path);
+                    }
+                }
+            }
+            public static GraphicsPath CreateRoundRect(RectangleF rect, float radius)
+            {
+                float d = radius * 2;
+                var path = new GraphicsPath();
+                path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+                path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+                path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+                path.CloseFigure();
+                return path;
+            }
+        }
+
+        private void ApplyRoundedRegion(ContextMenuStrip cms, int radius)
+        {
+            try
+            {
+                using (var path = DarkToolStripRenderer.CreateRoundRect(new RectangleF(0, 0, cms.Width - 1, cms.Height - 1), radius))
+                {
+                    cms.Region = new Region(path);
+                }
+            }
+            catch { }
         }
 
         private void Begin_Click(object sender, EventArgs e)
@@ -316,9 +440,6 @@ namespace TeamGipsy
             Thread thread = new Thread(new ThreadStart(pushWords.SetEngType));
             thread.Start();
         }
-
-
-
 
         private void ImportWords_Click(object sender, EventArgs e)
         {
@@ -538,6 +659,50 @@ namespace TeamGipsy
             StartWithWindows.CreateShortcut(startupPath);
         }
         #endregion
+
+        System.Timers.Timer dailyReminderTimer;
+
+        private void ScheduleDailyReminder()
+        {
+            DateTime now = DateTime.Now;
+            DateTime target = new DateTime(now.Year, now.Month, now.Day, 23, 40, 0);
+            if (now >= target) target = target.AddDays(1);
+            double ms = (target - now).TotalMilliseconds;
+            if (dailyReminderTimer != null)
+            {
+                dailyReminderTimer.Stop();
+                dailyReminderTimer.Dispose();
+            }
+            dailyReminderTimer = new System.Timers.Timer(ms);
+            dailyReminderTimer.AutoReset = false;
+            dailyReminderTimer.Elapsed += (s, e) =>
+            {
+                ShowDailyReminderIfNoStudy();
+                dailyReminderTimer.Interval = TimeSpan.FromDays(1).TotalMilliseconds;
+                dailyReminderTimer.AutoReset = true;
+                dailyReminderTimer.Start();
+            };
+            dailyReminderTimer.Start();
+        }
+
+        private void ShowDailyReminderIfNoStudy()
+        {
+            try
+            {
+                int cnt = Se.ReviewedTodayCount();
+                if (cnt <= 0)
+                {
+                    new ToastContentBuilder()
+                        .AddText("今天还没有背单词")
+                        .AddText("现在是23:40，来学习一下吧")
+                        .AddButton(new ToastButton().SetContent("开始学习").AddArgument("action", "daily_begin").SetBackgroundActivation())
+                        .Show();
+                }
+            }
+            catch
+            {
+            }
+        }
     }
 }
 
