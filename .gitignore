@@ -1,0 +1,5 @@
+obj/
+bin/
+token.txt
+.vs/
+.github/
