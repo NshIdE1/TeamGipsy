@@ -20,6 +20,8 @@ namespace TeamGipsy.Model.SqliteControl
         public static int ENG_TYPE = 2;  // 英语类型1：美语，2：英语
         public static int AUTO_PLAY = 1;  // 英语自动发音
         public static int AUTO_LOG = 1;  // 英语自动发音
+        public static string AI_API_BASE = "https://api.deepseek.com/v1/chat/completions";
+        public static string AI_API_KEY = "sk-232fcbc8884847668f5308c568843e9e";
         public SQLiteConnection DataBase;
         public IEnumerable<Word> AllWordList;
         public IEnumerable<BookCount> CountList;
@@ -132,6 +134,16 @@ namespace TeamGipsy.Model.SqliteControl
                 Update.CommandText = $"ALTER TABLE Global ADD COLUMN autoLog INTEGER NOT NULL DEFAULT {AUTO_LOG}";
                 Update.ExecuteNonQuery();
             }
+            if (HeadTileList.Contains("aiApiBase") == false)
+            {
+                Update.CommandText = $"ALTER TABLE Global ADD COLUMN aiApiBase TEXT DEFAULT ''";
+                Update.ExecuteNonQuery();
+            }
+            if (HeadTileList.Contains("aiApiKey") == false)
+            {
+                Update.CommandText = $"ALTER TABLE Global ADD COLUMN aiApiKey TEXT DEFAULT ''";
+                Update.ExecuteNonQuery();
+            }
             Global Temp = new Global();
             var GlobalVariable = DataBase.Query<Global>("select * from Global", Temp).ToArray();
             WORD_NUMBER = int.Parse(GlobalVariable[0].currentWordNumber);
@@ -139,6 +151,16 @@ namespace TeamGipsy.Model.SqliteControl
             AUTO_PLAY = GlobalVariable[0].autoPlay;
             ENG_TYPE = GlobalVariable[0].EngType;
             AUTO_LOG = GlobalVariable[0].autoLog;
+            if (!string.IsNullOrWhiteSpace(GlobalVariable[0].aiApiBase))
+                AI_API_BASE = GlobalVariable[0].aiApiBase;
+            if (!string.IsNullOrWhiteSpace(GlobalVariable[0].aiApiKey))
+                AI_API_KEY = GlobalVariable[0].aiApiKey;
+
+            if (string.IsNullOrWhiteSpace(GlobalVariable[0].aiApiBase))
+            {
+                Update.CommandText = $"UPDATE Global SET aiApiBase = '{AI_API_BASE}'";
+                try { Update.ExecuteNonQuery(); } catch { }
+            }
 
             if (TABLE_NAME == "StdJp_Mid" || TABLE_NAME == "Goin"
                 || TABLE_NAME == "GMAT_3" || TABLE_NAME == "GRE_2"
@@ -159,7 +181,9 @@ namespace TeamGipsy.Model.SqliteControl
                 $", currentBookName = '{TABLE_NAME}'" +
                 $", autoPlay = '{AUTO_PLAY}'" +
                 $", EngType = '{ENG_TYPE}' " +
-                $", autoLog = '{AUTO_LOG}'";
+                $", autoLog = '{AUTO_LOG}'" +
+                $", aiApiBase = '{AI_API_BASE}'" +
+                $", aiApiKey = '{AI_API_KEY}'";
             Update.ExecuteNonQuery();
         }
 
@@ -486,6 +510,8 @@ namespace TeamGipsy.Model.SqliteControl
         public int autoPlay { get; set; }
         public int EngType { get; set; }
         public int autoLog { get; set; }
+        public string aiApiBase { get; set; }
+        public string aiApiKey { get; set; }
     }
 
 

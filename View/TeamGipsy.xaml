@@ -6,7 +6,103 @@
         xmlns:local="clr-namespace:TeamGipsy"
         mc:Ignorable="d"
         DataContext="{Binding Source={StaticResource Locator},Path=Main}"
-        Title="TeamGipsy v1.0.0" Icon="/tglogo64.ico" Height="170" Width="400">
+        Title="TeamGipsy 仪表盘" Icon="/tglogo64.ico" Height="420" Width="640" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <SolidColorBrush x:Key="AccentBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="CardBgBrush" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="TextMainBrush" Color="#111827"/>
+        <SolidColorBrush x:Key="TextSubBrush" Color="#6B7280"/>
+        <Style x:Key="MetricCard" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Background" Value="{StaticResource CardBgBrush}"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="8"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.15"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="96"/>
+        </Style>
+    </Window.Resources>
     <Grid>
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#F3F4F6" Offset="0"/>
+                <GradientStop Color="#E5E7EB" Offset="1"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="8,0,8,16">
+                <TextBlock Text="学习仪表盘" Foreground="{StaticResource TextMainBrush}" FontSize="20" FontWeight="Bold"/>
+                <Border Background="{StaticResource AccentBrush}" CornerRadius="6" Padding="6,2" Margin="12,0,0,0">
+                    <TextBlock Text="TeamGipsy" Foreground="White" FontSize="12"/>
+                </Border>
+            </StackPanel>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Style="{StaticResource MetricCard}" Grid.Row="0" Grid.Column="0">
+                    <StackPanel>
+                        <TextBlock Text="今日学习数量" Foreground="{StaticResource TextSubBrush}" FontSize="13"/>
+                        <TextBlock Text="{Binding TodayCount}" Foreground="{StaticResource TextMainBrush}" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricCard}" Grid.Row="0" Grid.Column="1">
+                    <StackPanel>
+                        <TextBlock Text="本周学习数量" Foreground="{StaticResource TextSubBrush}" FontSize="13"/>
+                        <TextBlock Text="{Binding WeekCount}" Foreground="{StaticResource TextMainBrush}" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricCard}" Grid.Row="1" Grid.Column="0">
+                    <StackPanel>
+                        <TextBlock Text="复习完成" Foreground="{StaticResource TextSubBrush}" FontSize="13"/>
+                        <TextBlock Text="{Binding ReviewCompleted}" Foreground="{StaticResource TextMainBrush}" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricCard}" Grid.Row="1" Grid.Column="1">
+                    <StackPanel>
+                        <TextBlock Text="正确率" Foreground="{StaticResource TextSubBrush}" FontSize="13"/>
+                        <TextBlock Text="{Binding AccuracyRate, StringFormat={}{0}%}" Foreground="{StaticResource TextMainBrush}" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricCard}" Grid.Row="2" Grid.ColumnSpan="2">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="连续学习天数" Foreground="{StaticResource TextSubBrush}" FontSize="13"/>
+                        <TextBlock Text="{Binding StreakDays}" Foreground="{StaticResource TextMainBrush}" FontSize="28" FontWeight="Bold" Margin="16,0,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Content="刷新" Command="{Binding RefreshDashboard}" Style="{StaticResource PrimaryButton}"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

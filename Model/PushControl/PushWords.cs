@@ -42,6 +42,8 @@ namespace TeamGipsy.Model.PushControl
         // 当前推送单词的状态
         public int WORD_CURRENT_STATUS = 0;  // 背单词时候的状态
         public string WORD_NUMBER_STRING = "";  // 设置的单词数量
+        public string AI_API_BASE_STRING = "";
+        public string AI_API_KEY_STRING = "";
         public int QUESTION_CURRENT_RIGHT_ANSWER = -1;  // 当前问题的答案
         public int QUESTION_CURRENT_STATUS = 0;  // 问题的回答状态
         public Dictionary<string, string> AnswerDict = new Dictionary<string, string> {
@@ -326,6 +328,25 @@ namespace TeamGipsy.Model.PushControl
             return Tcs.Task;
         }
 
+        public Task<int> ProcessToastNotificationSetAi()
+        {
+            var tcs = new TaskCompletionSource<int>();
+            ToastNotificationManagerCompat.OnActivated += toastArgs =>
+            {
+                var args = ToastArguments.Parse(toastArgs.Argument);
+                string action = "";
+                try { action = args["action"]; } catch { tcs.TrySetResult(0); }
+                if (action == "yes")
+                {
+                    try { AI_API_BASE_STRING = (string)toastArgs.UserInput["api"]; } catch { }
+                    try { AI_API_KEY_STRING = (string)toastArgs.UserInput["key"]; } catch { }
+                    tcs.TrySetResult(1);
+                }
+                else tcs.TrySetResult(0);
+            };
+            return tcs.Task;
+        }
+
         /// <summary>
         /// 设置单词数量
         /// </summary>
@@ -333,16 +354,10 @@ namespace TeamGipsy.Model.PushControl
         {
             new ToastContentBuilder()
             .AddText("这次要背多少个？")
-            .AddToastInput(new ToastSelectionBox("number")
+            .AddToastInput(new ToastTextBox("number")
             {
-                DefaultSelectionBoxItemId = Select.WORD_NUMBER.ToString(),
-                Items =
-                {
-                    new ToastSelectionBoxItem("5", "5"),
-                    new ToastSelectionBoxItem("10", "10"),
-                    new ToastSelectionBoxItem("15", "15"),
-                    new ToastSelectionBoxItem("20", "20")
-                }
+                PlaceholderContent = "请输入数量，如 20",
+                DefaultInput = Select.WORD_NUMBER.ToString()
             })
             .AddButton(new ToastButton()
                 .SetContent("确定")
@@ -354,10 +369,20 @@ namespace TeamGipsy.Model.PushControl
             {
                 if (IsNumber(WORD_NUMBER_STRING))
                 {
-                    Select.WORD_NUMBER = int.Parse(WORD_NUMBER_STRING);
+                    int num = int.Parse(WORD_NUMBER_STRING);
+                    if (num <= 0)
+                    {
+                        PushMessage("设置失败：请输入大于 0 的数字");
+                        return;
+                    }
+                    Select.WORD_NUMBER = num;
                     Select Temp = new Select();
                     Temp.UpdateNumber(Select.WORD_NUMBER);
                     PushMessage("已设置单词数量为：" + WORD_NUMBER_STRING);
+                }
+                else
+                {
+                    PushMessage("设置失败：请输入有效数字");
                 }
             }
         }
@@ -402,6 +427,33 @@ namespace TeamGipsy.Model.PushControl
                     Temp.UpdateGlobalConfig();
                     //Select.UpdateGlobalConfig();
                 }
+            }
+        }
+
+        public void SetAiConfig()
+        {
+            new ToastContentBuilder()
+            .AddText("设置AI接口地址与密钥")
+            .AddToastInput(new ToastTextBox("api")
+            {
+                PlaceholderContent = "接口地址，例如 https://api.deepseek.com/v1/chat/completions",
+                DefaultInput = TeamGipsy.Model.SqliteControl.Select.AI_API_BASE
+            })
+            .AddToastInput(new ToastTextBox("key")
+            {
+                PlaceholderContent = "API KEY",
+                DefaultInput = TeamGipsy.Model.SqliteControl.Select.AI_API_KEY
+            })
+            .AddButton(new ToastButton().SetContent("确定").AddArgument("action", "yes").SetBackgroundActivation())
+            .Show();
+            var task = this.ProcessToastNotificationSetAi();
+            if (task.Result == 1)
+            {
+                TeamGipsy.Model.SqliteControl.Select.AI_API_BASE = AI_API_BASE_STRING ?? "";
+                TeamGipsy.Model.SqliteControl.Select.AI_API_KEY = AI_API_KEY_STRING ?? "";
+                TeamGipsy.Model.SqliteControl.Select sel = new TeamGipsy.Model.SqliteControl.Select();
+                sel.UpdateGlobalConfig();
+                PushMessage("已更新AI配置");
             }
         }
 
@@ -871,7 +923,7 @@ namespace TeamGipsy.Model.PushControl
         {
             if (Buttom != "")
                 new ToastContentBuilder()
-                .AddText("Toast Fish")
+                .AddText("TeamGipsy")
                 .AddText(Message)
                 .AddButton(new ToastButton()
                 .SetContent(Buttom)
@@ -880,7 +932,7 @@ namespace TeamGipsy.Model.PushControl
                 .Show();
             else
                 new ToastContentBuilder()
-                .AddText("Toast Fish")
+                .AddText("TeamGipsy")
                 .AddText(Message)
                 .Show();
         }

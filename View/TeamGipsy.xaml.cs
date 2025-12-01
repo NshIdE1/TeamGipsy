@@ -20,6 +20,8 @@ using System.Windows.Input;
 using System.Timers;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
+using TeamGipsy.Model.Ai;
 
 namespace TeamGipsy
 {
@@ -160,6 +162,8 @@ namespace TeamGipsy
         System.Windows.Forms.ToolStripMenuItem ImportWords = new System.Windows.Forms.ToolStripMenuItem();
         System.Windows.Forms.ToolStripMenuItem SelectBook = new System.Windows.Forms.ToolStripMenuItem();
         System.Windows.Forms.ToolStripMenuItem RandomTest = new System.Windows.Forms.ToolStripMenuItem();
+        System.Windows.Forms.ToolStripMenuItem Dashboard = new System.Windows.Forms.ToolStripMenuItem();
+        System.Windows.Forms.ToolStripMenuItem DeepenMemory = new System.Windows.Forms.ToolStripMenuItem();
 
         System.Windows.Forms.ToolStripMenuItem GotoHtml = new System.Windows.Forms.ToolStripMenuItem();
         System.Windows.Forms.ToolStripMenuItem Start = new System.Windows.Forms.ToolStripMenuItem();
@@ -167,6 +171,7 @@ namespace TeamGipsy
 
         System.Windows.Forms.ToolStripMenuItem SetAutoPlay = new System.Windows.Forms.ToolStripMenuItem();
         System.Windows.Forms.ToolStripMenuItem SetAutoLog = new System.Windows.Forms.ToolStripMenuItem();
+        System.Windows.Forms.ToolStripMenuItem AiSettings = new System.Windows.Forms.ToolStripMenuItem();
 
         private new void ContextMenu()
         {
@@ -183,6 +188,12 @@ namespace TeamGipsy
             Cms.Opening += (s, e) =>
             {
                 ApplyRoundedRegion(Cms, 12);
+                try
+                {
+                    int today = Se.ReviewedTodayCount();
+                    DeepenMemory.Visible = today >= Select.WORD_NUMBER;
+                }
+                catch { DeepenMemory.Visible = false; }
             };
 
 
@@ -227,6 +238,14 @@ namespace TeamGipsy
 
             RandomTest.Text = "随机测试";
             RandomTest.ForeColor = System.Drawing.Color.Black;
+
+            Dashboard.Text = "仪表盘";
+            Dashboard.ForeColor = System.Drawing.Color.Black;
+            Dashboard.Click += new EventHandler(Dashboard_Click);
+
+            DeepenMemory.Text = "加深记忆";
+            DeepenMemory.ForeColor = System.Drawing.Color.Black;
+            DeepenMemory.Click += new EventHandler(DeepenMemory_Click);
 
             GotoHtml.Text = "快捷说明";
             GotoHtml.Click += new EventHandler(ShortCuts_Click);
@@ -291,6 +310,8 @@ namespace TeamGipsy
             Cms.Items.Add(ImportWords);
             Cms.Items.Add(SelectBook);
             Cms.Items.Add(RandomTest);
+            Cms.Items.Add(Dashboard);
+            Cms.Items.Add(DeepenMemory);
             Cms.Items.Add(new ToolStripSeparator());
             Cms.Items.Add(Settings);
             Cms.Items.Add(GotoHtml);
@@ -299,21 +320,94 @@ namespace TeamGipsy
             Cms.Items.Add(new ToolStripSeparator());
             Cms.Items.Add(ExitMenuItem);
 
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET4_1);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET4_3);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET6_1);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(CET6_3);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(IELTS_3);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(TOEFL_2);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(KaoYan_1);
-            ((ToolStripDropDownItem)Cms.Items[3]).DropDownItems.Add(KaoYan_2);
-            ((ToolStripDropDownItem)Cms.Items[4]).DropDownItems.Add(RandomWord);
-            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetNumber);
-            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetEngType);
-            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetAutoPlay);
-            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(SetAutoLog);
-            ((ToolStripDropDownItem)Cms.Items[6]).DropDownItems.Add(ResetLearingStatus);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(CET4_1);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(CET4_3);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(CET6_1);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(CET6_3);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(IELTS_3);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(TOEFL_2);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(KaoYan_1);
+            ((ToolStripDropDownItem)SelectBook).DropDownItems.Add(KaoYan_2);
+            ((ToolStripDropDownItem)RandomTest).DropDownItems.Add(RandomWord);
+            ((ToolStripDropDownItem)Settings).DropDownItems.Add(SetNumber);
+            ((ToolStripDropDownItem)Settings).DropDownItems.Add(SetEngType);
+            ((ToolStripDropDownItem)Settings).DropDownItems.Add(SetAutoPlay);
+            ((ToolStripDropDownItem)Settings).DropDownItems.Add(SetAutoLog);
+            ((ToolStripDropDownItem)Settings).DropDownItems.Add(ResetLearingStatus);
 
+            AiSettings.Text = "AI配置";
+            AiSettings.Click += new EventHandler(AiSettings_Click);
+            ((ToolStripDropDownItem)Settings).DropDownItems.Add(AiSettings);
+
+        }
+
+        private void Dashboard_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Vm.RefreshDashboard.Execute(null);
+            }
+            catch { }
+            this.Visibility = Visibility.Visible;
+            this.ShowInTaskbar = true;
+            this.WindowState = WindowState.Normal;
+            this.Topmost = true;
+            this.Show();
+            this.Activate();
+        }
+
+        private void DeepenMemory_Click(object sender, EventArgs e)
+        {
+            DeepenMemoryAsync();
+        }
+
+        private async void DeepenMemoryAsync()
+        {
+            try
+            {
+                Se.SelectWordList();
+                var all = Se.AllWordList != null ? Se.AllWordList.ToList() : new List<Word>();
+                DateTime today = DateTime.Now.Date;
+                var todayWords = new List<Word>();
+                foreach (var w in all)
+                {
+                    if (!string.IsNullOrEmpty(w.dateLastReviewed))
+                    {
+                        DateTime dt;
+                        if (DateTime.TryParse(w.dateLastReviewed, out dt))
+                        {
+                            if (dt.Date == today)
+                                todayWords.Add(w);
+                        }
+                    }
+                }
+                if (todayWords.Count == 0)
+                {
+                    pushWords.PushMessage("今天没有可用单词");
+                    return;
+                }
+                var wordsToUse = todayWords.Where(x => !string.IsNullOrWhiteSpace(x.headWord))
+                    .GroupBy(x => x.headWord)
+                    .Select(g => g.First())
+                    .Take(Select.WORD_NUMBER)
+                    .ToList();
+                pushWords.PushMessage("正在生成内容，请稍候...");
+                var client = new DeepseekClient();
+                var essay = await client.GenerateEssayAsync(wordsToUse);
+                var win = new DeepenMemoryWindow(essay);
+                win.Topmost = true;
+                win.Show();
+            }
+            catch (Exception ex)
+            {
+                pushWords.PushMessage("生成失败：" + ex.Message);
+            }
+        }
+
+        private void AiSettings_Click(object sender, EventArgs e)
+        {
+            Thread thread = new Thread(new ThreadStart(pushWords.SetAiConfig));
+            thread.Start();
         }
 
         class TrayColorTable : ProfessionalColorTable
