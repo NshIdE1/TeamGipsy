@@ -1,3 +1,4 @@
+// 说明：SM2+ 参数集合，定义评分阈值与复习间隔等常量
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,3 +1,5 @@
+// 说明：ToastFishModel 计算“学习记录”中的各项指标
+// - ComputeDashboard：计算今日学习数、纯复习完成数、周学习数、正确率、连续天数
 using GalaSoft.MvvmLight;
 using System;
 using System.Collections.Generic;

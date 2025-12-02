@@ -1,3 +1,7 @@
+// 说明：PushWords 负责推送学习流程、通知与交互
+// - SetWordNumber/SetEngType：通过系统 Toast 设置本次学习数量与发音类型
+// - Recitation/RecitationSM2：按顺序或 SM2 策略推送学习
+// - UnorderWord：随机测试模式
 using System;
 using System.Collections.Generic;
 using System.IO;

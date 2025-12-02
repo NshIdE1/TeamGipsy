@@ -1,3 +1,5 @@
+// 说明：Card 表示学习卡片，封装 SM2+ 状态与调度逻辑
+// - updateCard：根据评分更新状态、时间与复习间隔
 using System;
 using System.Collections.Generic;
 using System.Linq;

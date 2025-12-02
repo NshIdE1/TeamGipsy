@@ -1,3 +1,8 @@
+// 说明：Select 封装数据库访问与全局配置
+// - LoadGlobalConfig：加载/补充 Global 表配置（含 AI 接口地址/密钥）
+// - SelectWordList：确保词库结构完整并加载所有单词
+// - updateCardDateBase：写回学习状态（含首次/最近复习时间）
+// - ReviewedTodayCount：统计今日学习数量（用于提醒与菜单显示）
 using Dapper;
 using System;
 using System.Collections.Generic;

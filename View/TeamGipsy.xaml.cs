@@ -1,3 +1,8 @@
+// 说明：主窗口负责托盘菜单、快捷键、提醒与学习流程入口
+// - ContextMenu：构建并维护托盘菜单（含“学习记录”“加深记忆”“AI配置”等）
+// - Begin_Click：启动学习线程（SM2 模式）
+// - DeepenMemoryAsync：汇总今日单词，调用 AI 生成英文短文与中文译文并展示
+// - ScheduleDailyReminder：每日学习提醒逻辑
 using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.Collections.Generic;

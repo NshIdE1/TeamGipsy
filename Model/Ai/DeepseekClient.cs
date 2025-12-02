@@ -1,3 +1,6 @@
+// 说明：DeepseekClient 负责与深度求索（Deepseek）接口交互
+// - GenerateEssayAsync：根据今日单词生成符合要求的小短文（英文，支持难度与美/英式拼写偏好）
+// - TranslateAsync：将英文短文翻译为简体中文，并尽量保留 Markdown 格式
 using System;
 using System.Collections.Generic;
 using System.Linq;
