@@ -55,6 +55,25 @@ namespace TeamGipsy.Model.Ai
             return essay;
         }
 
+        public async Task<string> TranslateAsync(string text)
+        {
+            var api = Select.AI_API_BASE;
+            var key = Select.AI_API_KEY;
+            if (string.IsNullOrWhiteSpace(api) || string.IsNullOrWhiteSpace(key))
+                throw new InvalidOperationException("AI配置未设置");
+
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            var prompt = "请将下面的英文短文翻译成简体中文，准确自然、通顺易读，不要逐词对照，不要返回任何额外说明，仅返回译文。如果原文包含 Markdown 格式（如加粗、段落），请在中文中保留这些格式。原文：\n" + text;
+            var body = "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"user\",\"content\":\"" + EscapeJson(prompt) + "\"}],\"temperature\":0.3}";
+            var content = new StringContent(body, Encoding.UTF8, "application/json");
+            var resp = await _http.PostAsync(api, content);
+            var txt = await resp.Content.ReadAsStringAsync();
+            var cn = TryExtractContentStrict(txt);
+            if (string.IsNullOrWhiteSpace(cn)) cn = TryExtractContent(txt);
+            if (string.IsNullOrWhiteSpace(cn)) throw new InvalidOperationException("AI返回解析失败");
+            return cn;
+        }
+
         static string EscapeJson(string s)
         {
             return s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n");

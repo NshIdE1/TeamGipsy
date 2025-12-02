@@ -394,7 +394,8 @@ namespace TeamGipsy
                 pushWords.PushMessage("正在生成内容，请稍候...");
                 var client = new DeepseekClient();
                 var essay = await client.GenerateEssayAsync(wordsToUse);
-                var win = new DeepenMemoryWindow(essay);
+                var translation = await client.TranslateAsync(essay);
+                var win = new DeepenMemoryWindow(essay, translation);
                 win.Topmost = true;
                 win.Show();
             }

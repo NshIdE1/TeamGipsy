@@ -6,12 +6,15 @@ namespace TeamGipsy
     public partial class DeepenMemoryWindow : Window
     {
         string _raw;
-        public DeepenMemoryWindow(string content)
+        string _cn;
+        public DeepenMemoryWindow(string content, string translation)
         {
             InitializeComponent();
             _raw = content ?? "";
-            var html = Markdown.ToHtml(_raw ?? "");
-            var doc = "<html><head><meta charset='utf-8'/><style>body{font-family:Segoe UI, Microsoft YaHei; font-size:34px; line-height:2.4; padding:22px;} p{margin:0 0 20px;} strong{font-weight:700;}</style></head><body>" + html + "</body></html>";
+            _cn = translation ?? "";
+            var html1 = Markdown.ToHtml(_raw);
+            var html2 = Markdown.ToHtml(_cn);
+            var doc = "<html><head><meta charset='utf-8'/><style>body{font-family:Segoe UI, Microsoft YaHei; font-size:30px; line-height:2.0; padding:18px;} p{margin:0 0 16px;} strong{font-weight:700;} h2{font-size:32px; margin:18px 0 12px;}</style></head><body>" + html1 + "<hr/><h2>译文</h2>" + html2 + "</body></html>";
             Browser.DocumentText = doc;
         }
 
@@ -22,7 +25,23 @@ namespace TeamGipsy
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
-            try { Clipboard.SetText(_raw ?? ""); } catch { }
+            try
+            {
+                bool done = false;
+                if (Browser.Document != null)
+                {
+                    try
+                    {
+                        Browser.Focus();
+                        Browser.Document.ExecCommand("Copy", false, null);
+                        done = true;
+                    }
+                    catch { done = false; }
+                }
+                if (!done)
+                    Clipboard.SetText((_raw ?? "") + "\n\n" + (_cn ?? ""));
+            }
+            catch { }
         }
     }
 }
