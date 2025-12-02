@@ -320,6 +320,11 @@ namespace TeamGipsy.Model.SqliteControl
                 Update.CommandText = $"ALTER TABLE {TABLE_NAME} ADD COLUMN dateLastReviewed TEXT  DEFAULT NULL";
                 Update.ExecuteNonQuery();
             }
+            if (HeadTileList.Contains("dateFirstReviewed") == false)
+            {
+                Update.CommandText = $"ALTER TABLE {TABLE_NAME} ADD COLUMN dateFirstReviewed TEXT  DEFAULT NULL";
+                Update.ExecuteNonQuery();
+            }
             Word Temp = new Word();
             AllWordList = DataBase.Query<Word>("select * from " + TABLE_NAME, Temp);
 
@@ -346,7 +351,8 @@ namespace TeamGipsy.Model.SqliteControl
                  Command += $"\nUPDATE {TABLE_NAME} SET dateLastReviewed ='{card.dateLastReviewed}' WHERE wordRank = {card.word.wordRank};";*/
                 String Command = $"UPDATE {TABLE_NAME} SET status = {(int)card.status}, " +
                     $"difficulty ={card.difficulty}, daysBetweenReviews ={card.daysBetweenReviews}, " +
-                    $"lastScore ={card.lastScore}, dateLastReviewed ='{card.dateLastReviewed}' " +
+                    $"lastScore ={card.lastScore}, dateLastReviewed ='{card.dateLastReviewed}', " +
+                    $"dateFirstReviewed = COALESCE(dateFirstReviewed, '{card.dateLastReviewed}') " +
                     $"WHERE wordRank = {card.word.wordRank};";
                 Update.CommandText = Command;
                 Update.ExecuteNonQuery();
@@ -490,6 +496,7 @@ namespace TeamGipsy.Model.SqliteControl
         public double daysBetweenReviews { get; set; }
         public double lastScore { get; set; }
         public String dateLastReviewed { get; set; }
+        public String dateFirstReviewed { get; set; }
     }
 
     [Serializable]

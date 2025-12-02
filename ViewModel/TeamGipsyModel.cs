@@ -89,7 +89,24 @@ namespace TeamGipsy.ViewModel
             }
 
             TodayCount = todayWords.Count;
-            ReviewCompleted = TodayCount;
+            int reviewedExistingToday = 0;
+            foreach (var w in todayWords)
+            {
+                if (!string.IsNullOrEmpty(w.dateFirstReviewed))
+                {
+                    DateTime dt0;
+                    if (DateTime.TryParse(w.dateFirstReviewed, out dt0))
+                    {
+                        if (dt0.Date < today)
+                            reviewedExistingToday++;
+                    }
+                    else
+                    {
+                        reviewedExistingToday++;
+                    }
+                }
+            }
+            ReviewCompleted = reviewedExistingToday;
 
             DateTime weekStart = GetWeekStart(today);
             int weekCnt = 0;

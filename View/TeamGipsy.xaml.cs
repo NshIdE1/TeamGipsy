@@ -239,7 +239,7 @@ namespace TeamGipsy
             RandomTest.Text = "随机测试";
             RandomTest.ForeColor = System.Drawing.Color.Black;
 
-            Dashboard.Text = "仪表盘";
+            Dashboard.Text = "学习记录";
             Dashboard.ForeColor = System.Drawing.Color.Black;
             Dashboard.Click += new EventHandler(Dashboard_Click);
 
