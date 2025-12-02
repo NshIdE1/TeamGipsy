@@ -26,7 +26,11 @@ namespace TeamGipsy.Model.SqliteControl
         public static int AUTO_PLAY = 1;  // 英语自动发音
         public static int AUTO_LOG = 1;  // 英语自动发音
         public static string AI_API_BASE = "https://api.deepseek.com/v1/chat/completions";
-        public static string AI_API_KEY = "sk-232fcbc8884847668f5308c568843e9e";
+        public static string AI_API_KEY = "";
+        public static string AI_ESSAY_TEXT = "";
+        public static string AI_ESSAY_TRANSLATION = "";
+        public static string AI_ESSAY_WORDS = "";
+        public static string AI_ESSAY_DATE = "";
         public SQLiteConnection DataBase;
         public IEnumerable<Word> AllWordList;
         public IEnumerable<BookCount> CountList;
@@ -149,6 +153,26 @@ namespace TeamGipsy.Model.SqliteControl
                 Update.CommandText = $"ALTER TABLE Global ADD COLUMN aiApiKey TEXT DEFAULT ''";
                 Update.ExecuteNonQuery();
             }
+            if (HeadTileList.Contains("aiEssayText") == false)
+            {
+                Update.CommandText = $"ALTER TABLE Global ADD COLUMN aiEssayText TEXT DEFAULT ''";
+                Update.ExecuteNonQuery();
+            }
+            if (HeadTileList.Contains("aiEssayTranslation") == false)
+            {
+                Update.CommandText = $"ALTER TABLE Global ADD COLUMN aiEssayTranslation TEXT DEFAULT ''";
+                Update.ExecuteNonQuery();
+            }
+            if (HeadTileList.Contains("aiEssayWords") == false)
+            {
+                Update.CommandText = $"ALTER TABLE Global ADD COLUMN aiEssayWords TEXT DEFAULT ''";
+                Update.ExecuteNonQuery();
+            }
+            if (HeadTileList.Contains("aiEssayDate") == false)
+            {
+                Update.CommandText = $"ALTER TABLE Global ADD COLUMN aiEssayDate TEXT DEFAULT ''";
+                Update.ExecuteNonQuery();
+            }
             Global Temp = new Global();
             var GlobalVariable = DataBase.Query<Global>("select * from Global", Temp).ToArray();
             WORD_NUMBER = int.Parse(GlobalVariable[0].currentWordNumber);
@@ -160,6 +184,10 @@ namespace TeamGipsy.Model.SqliteControl
                 AI_API_BASE = GlobalVariable[0].aiApiBase;
             if (!string.IsNullOrWhiteSpace(GlobalVariable[0].aiApiKey))
                 AI_API_KEY = GlobalVariable[0].aiApiKey;
+            AI_ESSAY_TEXT = GlobalVariable[0].aiEssayText ?? "";
+            AI_ESSAY_TRANSLATION = GlobalVariable[0].aiEssayTranslation ?? "";
+            AI_ESSAY_WORDS = GlobalVariable[0].aiEssayWords ?? "";
+            AI_ESSAY_DATE = GlobalVariable[0].aiEssayDate ?? "";
 
             if (string.IsNullOrWhiteSpace(GlobalVariable[0].aiApiBase))
             {
@@ -205,6 +233,20 @@ namespace TeamGipsy.Model.SqliteControl
         {
             SQLiteCommand Update = DataBase.CreateCommand();
             Update.CommandText = "UPDATE Global SET currentWordNumber = " + WordNumber.ToString();
+            Update.ExecuteNonQuery();
+        }
+
+        public void SaveAiEssayCache(string essay, string translation, string words, string date)
+        {
+            AI_ESSAY_TEXT = essay ?? "";
+            AI_ESSAY_TRANSLATION = translation ?? "";
+            AI_ESSAY_WORDS = words ?? "";
+            AI_ESSAY_DATE = date ?? "";
+            SQLiteCommand Update = DataBase.CreateCommand();
+            string t1 = (AI_ESSAY_TEXT ?? "").Replace("'", "''");
+            string t2 = (AI_ESSAY_TRANSLATION ?? "").Replace("'", "''");
+            string t3 = (AI_ESSAY_WORDS ?? "").Replace("'", "''");
+            Update.CommandText = $"UPDATE Global SET aiEssayText = '{t1}', aiEssayTranslation = '{t2}', aiEssayWords = '{t3}', aiEssayDate = '{AI_ESSAY_DATE}'";
             Update.ExecuteNonQuery();
         }
 
@@ -524,6 +566,10 @@ namespace TeamGipsy.Model.SqliteControl
         public int autoLog { get; set; }
         public string aiApiBase { get; set; }
         public string aiApiKey { get; set; }
+        public string aiEssayText { get; set; }
+        public string aiEssayTranslation { get; set; }
+        public string aiEssayWords { get; set; }
+        public string aiEssayDate { get; set; }
     }
 
 

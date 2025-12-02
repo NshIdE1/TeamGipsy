@@ -1,6 +1,7 @@
 # TeamGipsy 学习记录与 AI 辅助
 
 ## 概览
+
 - Windows 托盘学习应用，目标是推进每日英语学习与复习，并通过 AI 生成包含当日词汇的英文短文和中文译文。
 - 核心特性：
   - SM2+ 间隔重复算法管理复习节奏。
@@ -10,17 +11,21 @@
   - 本地 SQLite 数据库 `Resources/inami.db` 持久化学习进度与配置。
 
 ## 运行环境
+
 - 操作系统：Windows
 - .NET Framework：4.7.2
 - 开发工具：Visual Studio 2017+ 或 MSBuild
 - 外部服务：Deepseek（需要 API KEY）
 
 ## 依赖与引用
+
 - NuGet 包（见 `TeamGipsy.csproj`）：
-  - `CommonServiceLocator`, `Dapper`, `Microsoft.Toolkit.Uwp.Notifications`, `MP3Sharp`, `MvvmLight`, `NPOI`, `Prism.Core`, `System.Data.SQLite`, `System.Reactive`, `Markdig`
+  - `CommonServiceLocator`, `Dapper`, `Microsoft.Toolkit.Uwp.Notifications`, `MP3Sharp`, `MvvmLight`, `NPOI`, `Prism.Core`, `System.Data.SQLite`, `System.Reactive`
 - 框架引用：`System.Windows.Forms`, `WindowsFormsIntegration`, `System.Web.Extensions` 等
+  - Markdown 渲染采用内嵌 JS 解析器在 `WebBrowser` 中执行（无需外部网络），不依赖 `Markdig`
 
 ## 构建与运行
+
 - 使用 Visual Studio
   - 打开解决方案 `TeamGipsy.sln`
   - 选择配置（Debug 或 Release）并构建运行
@@ -29,13 +34,15 @@
     - `msbuild .\TeamGipsy.sln /t:Build /p:Configuration=Release`
 
 ## 快速开始
+
 - 启动应用后将驻留在系统托盘。
-- 右键托盘图标打开菜单，建议先进入“参数设置→AI配置”填入 `接口地址` 与 `API KEY`。
+- 右键托盘图标打开菜单，建议先进入“参数设置 →AI 配置”填入 `接口地址` 与 `API KEY`。
   - 默认接口地址：`https://api.deepseek.com/v1/chat/completions`（可在配置中覆盖）
 - 按 `ALT+Q` 触发当日学习，或在菜单点击“开始！”。
 - 达成今日目标后，菜单将显示“加深记忆”，点击会生成包含当日词汇的英文短文与中文译文，并弹窗展示。
 
 ## 菜单说明
+
 - 开始！：启动当次学习流程
 - 参数设置：
   - 单词个数：设置当次目标单词数
@@ -43,7 +50,7 @@
   - 自动播放：自动发音切换
   - 自动日志：学习日志开关
   - 重置进度：重置当前词库学习状态
-  - AI配置：设置/更新 `AI接口地址` 与 `API KEY`
+  - AI 配置：设置/更新 `AI接口地址` 与 `API KEY`
 - 导入单词：导入 Excel（支持英语或自定义模板）
 - 英语词汇：切换词库（CET4/CET6/IELTS/TOEFL/考研等）
 - 随机测试：随机单词测试模式
@@ -54,6 +61,7 @@
 - 退出：退出程序
 
 ## 学习流程
+
 - 入口：
   - 托盘菜单“开始！”或快捷键 `ALT+Q` 触发 `Begin_Click`
   - 入口代码：`View/TeamGipsy.xaml.cs:421`
@@ -63,6 +71,7 @@
 - 语音播放与提示：通过 `Microsoft.Toolkit.Uwp.Notifications` 与 MP3 播放实现。
 
 ## 学习记录指标
+
 - 实现位置：`ViewModel/TeamGipsyModel.cs:70-119`
 - 指标含义：
   - `TodayCount`：今日学习数量（`dateLastReviewed == 今天` 的单词数）
@@ -72,24 +81,34 @@
   - `StreakDays`：连续学习天数（最近连续日期集合包含今天向前数的天数）
 
 ## AI 集成与配置
+
 - 客户端：`Model/Ai/DeepseekClient.cs`
   - `GenerateEssayAsync(words)`：根据传入的“当日词汇（去重后取 `Select.WORD_NUMBER` 个）”生成英文短文；提示词会动态标注必须使用的单词个数与美/英式拼写偏好。
   - `TranslateAsync(text)`：将英文短文翻译为简体中文；优先解析 JSON 的 `choices[0].message.content`，失败则回退正则。
 - 配置读写：`Model/SqliteControl/Select.cs:111-164,169-180`
-  - `LoadGlobalConfig`：加载 `Global` 表，并仅在非空值时覆盖内置默认；若地址为空，会写回默认值到数据库。
+  - `LoadGlobalConfig`：加载 `Global` 表，并仅在非空值时覆盖内置默认；若地址为空，会写入默认值到数据库。
   - `UpdateGlobalConfig`：写回当前配置（包括 `aiApiBase` 与 `aiApiKey`）。
 - 菜单入口：`View/TeamGipsy.xaml.cs:336-338,402-406`
-  - 点击“AI配置”弹出 Toast 输入框，保存后持久化。
+  - 点击“AI 配置”弹出 Toast 输入框，保存后持久化。
+
+### 安全配置建议
+
+- 不要在代码中硬编码或提交密钥到仓库。默认 `AI_API_KEY` 为空。
+- 设置密钥的方式：
+  - 托盘菜单 → 参数设置 → AI 配置（推荐，写入本地数据库 `Global.aiApiKey`）
+- 接口地址默认：`https://api.deepseek.com/v1/chat/completions`；可在“AI 配置”中修改。
 
 ## “加深记忆”弹窗
+
 - 生成逻辑：`View/TeamGipsy.xaml.cs:384-399`
   - 收集今日学习单词，去重后取 `Select.WORD_NUMBER` 个，先生成英文，再生成中文译文。
 - 展示窗口：`View/DeepenMemoryWindow.xaml` / `View/DeepenMemoryWindow.xaml.cs`
-  - 使用 `Markdig` 将 Markdown 转 HTML，承载于 `WindowsFormsHost + WebBrowser`。
+  - 使用内嵌 JS Markdown 解析器在 `WindowsFormsHost + WebBrowser` 中渲染，离线可用。
   - 字体较大，行距舒适；展示顺序为英文原文 + 分隔线 + 中文译文。
   - 复制：支持选中部分复制（优先复制选中内容），未选中时复制“原文+译文”全文。
 
 ## 数据库结构与迁移
+
 - 数据库文件：`Resources/inami.db`
 - 表与字段（关键）：
   - `Global`：`currentWordNumber`, `currentBookName`, `autoPlay`, `EngType`, `autoLog`, `aiApiBase`, `aiApiKey`
@@ -101,11 +120,13 @@
   - 写入 `status` 与复习相关字段，并用 `COALESCE` 初始化 `dateFirstReviewed` 为首次复习时间。
 
 ## 快捷键
+
 - `ALT+Q`：开始内置单词学习
 - `ALT+~`：英语单词发音
 - `ALT+1` 到 `ALT+4`：答题选项
 
 ## 目录结构
+
 ```
 Model/
   Ai/DeepseekClient.cs           # AI 客户端（生成与翻译）
@@ -122,21 +143,19 @@ Resources/
 ```
 
 ## 常见问题
-- 提示“AI设置未配置”
-  - 请确保 `Global.aiApiBase` 与 `Global.aiApiKey` 非空；可在“参数设置→AI配置”输入。
+
+- 提示“AI 设置未配置”
+  - 请确保 `Global.aiApiBase` 与 `Global.aiApiKey` 非空；可在“参数设置 → AI 配置”输入。
   - 若地址为空，系统会写入默认地址；密钥仍需手动填入。
-- 子窗体 Owner 异常
-  - 主窗体在启动时隐藏，故不设置 Owner；弹窗使用 `Topmost` 显示。
-- Markdown 字体过小
-  - 已调至较大字号（30px），若需要更大或支持缩放，可进一步扩展。
-- “学习记录”中复习数量统计不准确
-  - 已修正为仅统计 `dateFirstReviewed < 今天` 且 `dateLastReviewed == 今天` 的单词，表示纯复习数量。
+  - 可选：若设置了系统环境变量 `DEEPSEEK_API_KEY`，在数据库密钥为空时会自动使用该变量；未设置则忽略此回退。
 
 ## 安全与隐私
+
 - API Key 存储在本地数据库 `Global.aiApiKey` 字段，请勿分享可执行文件与数据库给他人。
 - 不在日志或 UI 中输出密钥；如需上报错误请去除敏感信息。
 
 ## 开发说明
+
 - 主线程入口与托盘菜单：`View/TeamGipsy.xaml.cs`
 - 学习记录视图：`View/TeamGipsy.xaml`
 - 指标计算：`ViewModel/TeamGipsyModel.cs`

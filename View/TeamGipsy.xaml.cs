@@ -38,6 +38,7 @@ namespace TeamGipsy
 
         ToastFishModel Vm = new ToastFishModel();
         Select Se = new Select();
+        bool _isGeneratingEssay = false;
         PushWords pushWords = new PushWords();
         Thread thread = new Thread(new ParameterizedThreadStart(PushWords.Recitation));
         Dictionary<string, string> TablelDictionary = new Dictionary<string, string>(){
@@ -368,6 +369,12 @@ namespace TeamGipsy
 
         private async void DeepenMemoryAsync()
         {
+            if (_isGeneratingEssay)
+            {
+                pushWords.PushMessage("正在生成中...");
+                return;
+            }
+            _isGeneratingEssay = true;
             try
             {
                 Se.SelectWordList();
@@ -394,19 +401,45 @@ namespace TeamGipsy
                 var wordsToUse = todayWords.Where(x => !string.IsNullOrWhiteSpace(x.headWord))
                     .GroupBy(x => x.headWord)
                     .Select(g => g.First())
+                    .OrderBy(x => x.headWord)
                     .Take(Select.WORD_NUMBER)
                     .ToList();
-                pushWords.PushMessage("正在生成内容，请稍候...");
+                var wordsJoined = string.Join(",", wordsToUse.Select(x => x.headWord));
+
+                string todayStr = DateTime.Now.ToString("yyyy-MM-dd");
+                if (!string.IsNullOrEmpty(Select.AI_ESSAY_TEXT) && Select.AI_ESSAY_DATE == todayStr && Select.AI_ESSAY_WORDS == wordsJoined)
+                {
+                    var cachedWin = new DeepenMemoryWindow(Select.AI_ESSAY_TEXT, Select.AI_ESSAY_TRANSLATION);
+                    cachedWin.Topmost = true;
+                    cachedWin.Show();
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(Select.AI_API_BASE) || string.IsNullOrWhiteSpace(Select.AI_API_KEY))
+                {
+                    pushWords.PushMessage("请先在 参数设置 → AI配置 中设置接口地址与密钥");
+                    Thread thread = new Thread(new ThreadStart(pushWords.SetAiConfig));
+                    thread.Start();
+                    return;
+                }
+
+                pushWords.ShowLoadingToast("正在生成内容，请稍候...");
                 var client = new DeepseekClient();
                 var essay = await client.GenerateEssayAsync(wordsToUse);
                 var translation = await client.TranslateAsync(essay);
+                pushWords.DismissLoadingToast();
                 var win = new DeepenMemoryWindow(essay, translation);
                 win.Topmost = true;
                 win.Show();
+                Se.SaveAiEssayCache(essay, translation, wordsJoined, todayStr);
             }
             catch (Exception ex)
             {
                 pushWords.PushMessage("生成失败：" + ex.Message);
+            }
+            finally
+            {
+                _isGeneratingEssay = false;
             }
         }
 

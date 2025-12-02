@@ -9,6 +9,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Notifications;
+using Windows.UI.Notifications;
 using TeamGipsy.Model.SqliteControl;
 using System.Threading;
 using System.Speech.Synthesis;
@@ -54,6 +55,8 @@ namespace TeamGipsy.Model.PushControl
             {"0","A"},{"1","B"},{"2","C"},{"3","D"}
         };
         public static MyHotObservable HotKeytObservable = new MyHotObservable();
+        const string LoadingTag = "ai_gen";
+        const string LoadingGroup = "deepen";
 
         /// <summary>
         /// 判断字符串是否为数字
@@ -1315,6 +1318,24 @@ namespace TeamGipsy.Model.PushControl
                 objStream.Seek(0, SeekOrigin.Begin);
                 return (List<Word>)formatter.Deserialize(objStream);
             }
+        }
+        public void ShowLoadingToast(string text)
+        {
+            var content = new ToastContentBuilder()
+                .AddText(text)
+                .GetToastContent();
+            var toast = new ToastNotification(content.GetXml())
+            {
+                Tag = LoadingTag,
+                Group = LoadingGroup,
+                ExpirationTime = DateTimeOffset.Now.AddMinutes(10)
+            };
+            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+        }
+
+        public void DismissLoadingToast()
+        {
+            try { ToastNotificationManagerCompat.History.Remove(LoadingTag, LoadingGroup); } catch { }
         }
     }
 }
