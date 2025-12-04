@@ -83,6 +83,14 @@ namespace TeamGipsy
             };
 
             ScheduleDailyReminder();
+            this.Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
+            this.ShowInTaskbar = false;
         }
 
         private void OnHotKeyHandler(HotKey hotKey)
@@ -838,4 +846,3 @@ namespace TeamGipsy
         }
     }
 }
-
