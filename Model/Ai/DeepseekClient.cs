@@ -77,6 +77,44 @@ namespace TeamGipsy.Model.Ai
             return cn;
         }
 
+        public string GenerateStudyReportPrompt(Dictionary<string, object> studyData)
+        {
+            string totalWords = studyData.ContainsKey("TotalWords") ? studyData["TotalWords"].ToString() : "0";
+            string learnedWords = studyData.ContainsKey("LearnedWords") ? studyData["LearnedWords"].ToString() : "0";
+            string todayLearned = studyData.ContainsKey("TodayLearned") ? studyData["TodayLearned"].ToString() : "0";
+            string accuracy = studyData.ContainsKey("Accuracy") ? studyData["Accuracy"].ToString() : "0%";
+            string streak = studyData.ContainsKey("Streak") ? studyData["Streak"].ToString() : "0";
+            
+            string prompt = $"作为一位专业的英语学习顾问，请根据以下学习数据为我生成一份详细的学习情况汇报和学习规划：\n" +
+                           $"- 总词汇量：{totalWords}\n" +
+                           $"- 已学习词汇：{learnedWords}\n" +
+                           $"- 今日学习词汇：{todayLearned}\n" +
+                           $"- 学习准确率：{accuracy}\n" +
+                           $"- 连续学习天数：{streak}\n\n" +
+                           "请分析我的学习情况，包括优势和需要改进的地方，并制定一份个性化的学习规划，帮助我更高效地学习英语词汇。";
+            
+            return prompt;
+        }
+        public async Task<string> SendMessageAsync(string prompt)
+        {
+            var api = Select.AI_API_BASE;
+            var key = Select.AI_API_KEY;
+            if (string.IsNullOrWhiteSpace(api) || string.IsNullOrWhiteSpace(key))
+                throw new InvalidOperationException("AI配置未设置");
+
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            var body = "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"user\",\"content\":\"" + EscapeJson(prompt) + "\"}],\"temperature\":0.7}";
+            var content = new StringContent(body, Encoding.UTF8, "application/json");
+            var resp = await _http.PostAsync(api, content);
+            var txt = await resp.Content.ReadAsStringAsync();
+            var response = TryExtractContentStrict(txt);
+            if (string.IsNullOrWhiteSpace(response))
+                response = TryExtractContent(txt);
+            if (string.IsNullOrWhiteSpace(response))
+                throw new InvalidOperationException("AI返回解析失败");
+            return response;
+        }
+
         static string EscapeJson(string s)
         {
             return s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n");

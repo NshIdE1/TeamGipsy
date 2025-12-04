@@ -322,6 +322,63 @@ namespace TeamGipsy.Model.SqliteControl
             }
             return cnt;
         }
+        
+        public Dictionary<string, object> GetStudyStatistics()
+        {
+            SelectWordList();
+            var allWords = AllWordList.ToList();
+            
+            int totalWords = allWords.Count;
+            
+            int learnedWords = allWords.Count(w => w.status != 0 || !string.IsNullOrEmpty(w.dateLastReviewed));
+            
+            DateTime today = DateTime.Now.Date;
+            int todayLearned = allWords.Count(w => 
+                !string.IsNullOrEmpty(w.dateLastReviewed) && 
+                DateTime.TryParse(w.dateLastReviewed, out DateTime dt) && 
+                dt.Date == today);
+            
+            double accuracy = 0;
+            int reviewedWords = allWords.Count(w => w.lastScore > 0);
+            if (reviewedWords > 0)
+            {
+                double totalScore = allWords.Where(w => w.lastScore > 0).Sum(w => w.lastScore);
+                accuracy = Math.Round((totalScore / (reviewedWords * 5)) * 100, 1); // 假设最高分为5分
+            }
+            
+            int streak = 0;
+            DateTime checkDate = today;
+            bool continueStreak = true;
+            
+            while (continueStreak)
+            {
+                bool studiedOnDate = allWords.Any(w => 
+                    !string.IsNullOrEmpty(w.dateLastReviewed) && 
+                    DateTime.TryParse(w.dateLastReviewed, out DateTime dt) && 
+                    dt.Date == checkDate);
+                
+                if (studiedOnDate)
+                {
+                    streak++;
+                    checkDate = checkDate.AddDays(-1);
+                }
+                else
+                {
+                    continueStreak = false;
+                }
+            }
+            
+            var result = new Dictionary<string, object>
+            {
+                { "TotalWords", totalWords },
+                { "LearnedWords", learnedWords },
+                { "TodayLearned", todayLearned },
+                { "Accuracy", $"{accuracy}%" },
+                { "Streak", streak }
+            };
+            
+            return result;
+        }
         #endregion
 
         #region 英语部分

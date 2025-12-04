@@ -83,14 +83,6 @@ namespace TeamGipsy
             };
 
             ScheduleDailyReminder();
-            this.Closing += MainWindow_Closing;
-        }
-
-        private void MainWindow_Closing(object sender, CancelEventArgs e)
-        {
-            e.Cancel = true;
-            this.Hide();
-            this.ShowInTaskbar = false;
         }
 
         private void OnHotKeyHandler(HotKey hotKey)
@@ -178,6 +170,7 @@ namespace TeamGipsy
         System.Windows.Forms.ToolStripMenuItem RandomTest = new System.Windows.Forms.ToolStripMenuItem();
         System.Windows.Forms.ToolStripMenuItem Dashboard = new System.Windows.Forms.ToolStripMenuItem();
         System.Windows.Forms.ToolStripMenuItem DeepenMemory = new System.Windows.Forms.ToolStripMenuItem();
+        System.Windows.Forms.ToolStripMenuItem StudyReport = new System.Windows.Forms.ToolStripMenuItem();
 
         System.Windows.Forms.ToolStripMenuItem GotoHtml = new System.Windows.Forms.ToolStripMenuItem();
         System.Windows.Forms.ToolStripMenuItem Start = new System.Windows.Forms.ToolStripMenuItem();
@@ -261,6 +254,10 @@ namespace TeamGipsy
             DeepenMemory.ForeColor = System.Drawing.Color.Black;
             DeepenMemory.Click += new EventHandler(DeepenMemory_Click);
 
+            StudyReport.Text = "学习情况汇报";
+            StudyReport.ForeColor = System.Drawing.Color.Black;
+            StudyReport.Click += new EventHandler(StudyReport_Click);
+
             GotoHtml.Text = "快捷说明";
             GotoHtml.Click += new EventHandler(ShortCuts_Click);
             GotoHtml.ForeColor = System.Drawing.Color.Black;
@@ -326,6 +323,7 @@ namespace TeamGipsy
             Cms.Items.Add(RandomTest);
             Cms.Items.Add(Dashboard);
             Cms.Items.Add(DeepenMemory);
+            Cms.Items.Add(StudyReport);
             Cms.Items.Add(new ToolStripSeparator());
             Cms.Items.Add(Settings);
             Cms.Items.Add(GotoHtml);
@@ -374,6 +372,52 @@ namespace TeamGipsy
         {
             DeepenMemoryAsync();
         }
+
+        private void StudyReport_Click(object sender, EventArgs e)
+        {
+            StudyReportAsync();
+        }
+
+        private async void StudyReportAsync()
+        {
+            if (_isGeneratingEssay)
+            {
+                pushWords.PushMessage("正在生成中...");
+                return;
+            }
+            _isGeneratingEssay = true;
+            try
+            {
+                // 获取学习数据
+                var studyData = Se.GetStudyStatistics();
+                
+                if (studyData == null || studyData.Count == 0)
+                {
+                    pushWords.PushMessage("没有足够的学习数据来生成报告");
+                    return;
+                }
+                var client = new DeepseekClient();
+                // 生成学习情况汇报提示
+                string prompt = client.GenerateStudyReportPrompt(studyData);
+
+                pushWords.PushMessage("正在生成学习情况汇报...");
+                
+                
+                string response = await client.SendMessageAsync(prompt);
+                
+                var reportWindow = new StudyReportWindow(response);
+                reportWindow.Show();
+                
+            }
+            catch (Exception ex)
+            {
+                pushWords.PushMessage("生成学习情况汇报失败：" + ex.Message);
+            }
+            finally
+            {
+                _isGeneratingEssay = false;
+            }
+        } 
 
         private async void DeepenMemoryAsync()
         {
@@ -846,3 +890,4 @@ namespace TeamGipsy
         }
     }
 }
+
